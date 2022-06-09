@@ -9,6 +9,8 @@ contract Voting {
         string question;
         uint yesCount;
         uint noCount;
+        uint numVotes;
+        bool isClosed;
         mapping (address => VoteStates) voteStates;
     }
 
@@ -36,18 +38,39 @@ contract Voting {
         Proposal storage proposal = proposals.push();
         proposal.creator = msg.sender;
         proposal.question = _question;
+        proposal.voteStates[msg.sender] = VoteStates.Yes;
+        proposal.yesCount = 1;
+    }
+
+    function removeVote(uint _proposalId) external {
+        require(members[msg.sender]);
+        Proposal storage proposal = proposals[_proposalId];
+
+        if(proposal.voteStates[msg.sender] == VoteStates.Yes) {
+            proposal.yesCount--;
+        }
+        if(proposal.voteStates[msg.sender] == VoteStates.No) {
+            proposal.noCount--;
+        }
+
+        proposal.voteStates[msg.sender] = VoteStates.Absent;
+        proposal.numVotes--;
     }
 
     function castVote(uint _proposalId, bool _supports) external {
         require(members[msg.sender]);
         Proposal storage proposal = proposals[_proposalId];
 
+        require(proposal.isClosed == false);
+
         // clear out previous vote
         if(proposal.voteStates[msg.sender] == VoteStates.Yes) {
             proposal.yesCount--;
+            proposal.numVotes--;
         }
         if(proposal.voteStates[msg.sender] == VoteStates.No) {
             proposal.noCount--;
+            proposal.numVotes--;
         }
 
         // add new vote
@@ -58,9 +81,12 @@ contract Voting {
             proposal.noCount++;
         }
 
+        proposal.numVotes++;
+
         // we're tracking whether or not someone has already voted
         // and we're keeping track as well of what they voted
         proposal.voteStates[msg.sender] = _supports ? VoteStates.Yes : VoteStates.No;
+        proposal.isClosed = proposal.numVotes > 5 ? true : false; 
 
         emit VoteCast(_proposalId, msg.sender);
     }

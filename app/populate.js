@@ -41,15 +41,20 @@ function renderProposals() {
 }
 
 function addListeners(id) {
-  document.getElementById(`yes-${id}`).addEventListener("click", async () => {
+  document.getElementById(`yes-${id}`)?.addEventListener("click", async () => {
     const signer = provider.getSigner();
     await ethereum.request({ method: 'eth_requestAccounts' });
     await contract.connect(signer).castVote(id, true);
   });
-  document.getElementById(`no-${id}`).addEventListener("click", async () => {
+  document.getElementById(`no-${id}`)?.addEventListener("click", async () => {
     const signer = provider.getSigner();
     await ethereum.request({ method: 'eth_requestAccounts' });
     await contract.connect(signer).castVote(id, false);
+  });
+  document.getElementById(`remove-${id}`)?.addEventListener("click", async () => {
+    const signer = provider.getSigner();
+    await ethereum.request({ method: 'eth_requestAccounts' });
+    await contract.connect(signer).removeVote(id);
   });
 }
 
